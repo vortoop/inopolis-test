@@ -1,0 +1,16 @@
+{
+  "db": {
+    "class": "yii\\db\\Connection",
+    "schemaCache": "cache",
+    "charset": "utf8",
+    "login": "postgres",
+    "password": "postgres",
+    "host": "localhost",
+    "dbname": "inopolis",
+    "test-dbname": "inopolis_test"
+  },
+  "capcha": {
+    "reCapchaSecret": "secret-key",
+    "reCapchaSiteKey": "site-key"
+  }
+}
