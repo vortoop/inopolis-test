@@ -5,6 +5,9 @@ namespace frontend\forms;
 /**
  * Форма для авторизации или регистрации (при необходимости) пользователя
  * Class AuthForm
+ *
+ * @property $email [string]
+ * @property $password [string]
  */
 class AuthForm extends \yii\base\Model
 {

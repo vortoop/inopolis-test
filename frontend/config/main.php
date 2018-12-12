@@ -12,6 +12,7 @@ return [
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
     'controllerNamespace' => 'frontend\controllers',
+    'language' => 'ru-RU',
     'components' => [
         'db' => require(__DIR__ . '/db.php'),
         'request' => [
@@ -47,6 +48,17 @@ return [
             'enableStrictParsing' => true,
             'rules' => require(__DIR__ . '/routes.php'),
         ],
+        'mailer' => [
+            'class' => 'yii\swiftmailer\Mailer',
+            'useFileTransport' => false,
+            'transport' => [
+                'class' => $_ENV['YII_PRODUCT_SETTINGS']['mailer']['class'],
+                'host' => $_ENV['YII_PRODUCT_SETTINGS']['mailer']['host'],
+                'username' => $_ENV['YII_PRODUCT_SETTINGS']['mailer']['username'],
+                'password' => $_ENV['YII_PRODUCT_SETTINGS']['mailer']['password'],
+                'port' => $_ENV['YII_PRODUCT_SETTINGS']['mailer']['port'],
+            ]
+        ]
     ],
     'params' => $params,
 ];

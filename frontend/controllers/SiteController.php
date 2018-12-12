@@ -2,17 +2,15 @@
 
 namespace frontend\controllers;
 
+use common\models\LoginForm;
+use common\models\auth\AuthCode;
+use common\services\mail\MailService;
+use common\services\user\UserService;
 use frontend\forms\AuthForm;
 use Yii;
-use yii\base\InvalidParamException;
-use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
-use common\models\LoginForm;
-use frontend\models\PasswordResetRequestForm;
-use frontend\models\ResetPasswordForm;
-use frontend\models\SignupForm;
 
 /**
  * Class SiteController
@@ -78,32 +76,71 @@ class SiteController extends Controller
     }
 
     /**
+     * @param $authCode
      * @return string|\yii\web\Response
+     * @throws \yii\base\Exception
      */
-    public function actionLogin()
+    public function actionLogin($authCode)
     {
         if (!Yii::$app->user->isGuest) {
             return $this->goHome();
         }
 
-        $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            return $this->goBack();
-        } else {
-            $model->password = '';
-
-            return $this->render('login', [
-                'model' => $model,
-            ]);
+        if (!$authCode) {
+            Yii::$app->session->setFlash('success', 'Не верная ссылка для авторизации.');
+            return $this->redirect(['site/auth']);
         }
+
+        $auth = AuthCode::find()
+            ->andWhere(['auth_code' => $authCode])
+            ->andWhere(['status' => AuthCode::STATUS_ACTIVE])
+            ->orderBy(['id' => SORT_DESC])
+            ->one();
+
+        if (!$auth) {
+            $message = 'Неверная ссылка или ссылка уже была использована. Пожалуйста повторите процесс авторизации.';
+            Yii::$app->session->setFlash('danger', $message);
+            return $this->redirect(['site/auth']);
+        }
+
+        if (!$auth->user) {
+            $userService = new UserService();
+            if (!$userService->create($auth->email)) {
+                Yii::$app->session->setFlash('danger', 'Ошибка создания нового пользователя.');
+                return $this->redirect(['site/auth']);
+            }
+        }
+
+        $model = new LoginForm();
+        $model->email = $auth->email;
+
+        try {
+            if ($model->login()) {
+                $auth->setStatusUses();
+                $auth->save();
+                return $this->goBack();
+            }
+        } catch (\Exception $exception) {
+            Yii::$app->session->setFlash('danger', 'Ошибка авторизации. Пожалуйства попробуйте еще раз.');
+            return $this->redirect(['site/auth']);
+        }
+
+        return $this->redirect(['site/auth']);
     }
 
+    /**
+     * @return string
+     * @throws \yii\base\Exception
+     */
     public function actionAuth()
     {
         $authForm = new AuthForm();
         $authForm->setScenarioEmail();
 
-        $rtttt = $authForm->isAssignEmailScenario();
+        if ($authForm->load(Yii::$app->request->post()) && $authForm->validate()) {
+            $mailService = new MailService();
+            $mailService->sendMessageAuth($authForm->email);
+        }
 
         return $this->render('auth', [
             'authForm' => $authForm,
@@ -116,77 +153,6 @@ class SiteController extends Controller
     public function actionLogout()
     {
         Yii::$app->user->logout();
-
         return $this->goHome();
-    }
-
-    /**
-     * Signs user up.
-     *
-     * @return mixed
-     */
-    public function actionSignup()
-    {
-        $model = new SignupForm();
-        if ($model->load(Yii::$app->request->post())) {
-            if ($user = $model->signup()) {
-                if (Yii::$app->getUser()->login($user)) {
-                    return $this->goHome();
-                }
-            }
-        }
-
-        return $this->render('signup', [
-            'model' => $model,
-        ]);
-    }
-
-    /**
-     * Requests password reset.
-     *
-     * @return mixed
-     */
-    public function actionRequestPasswordReset()
-    {
-        $model = new PasswordResetRequestForm();
-        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-            if ($model->sendEmail()) {
-                Yii::$app->session->setFlash('success', 'Check your email for further instructions.');
-
-                return $this->goHome();
-            } else {
-                Yii::$app->session->setFlash('error', 'Sorry, we are unable to reset password for the provided email address.');
-            }
-        }
-
-        return $this->render('requestPasswordResetToken', [
-            'model' => $model,
-        ]);
-    }
-
-    /**
-     * Resets password.
-     *
-     * @param string $token
-     * @return mixed
-     * @throws BadRequestHttpException
-     */
-    public function actionResetPassword($token)
-    {
-        try {
-            $model = new ResetPasswordForm($token);
-        } catch (InvalidParamException $e) {
-            throw new BadRequestHttpException($e->getMessage());
-        }
-
-        if ($model->load(Yii::$app->request->post()) && $model->validate() && $model->resetPassword()) {
-            Yii::$app->session->setFlash('success', 'New password saved.');
-
-            return $this->goHome();
-        }
-
-        return $this->render('resetPassword', [
-            'model' => $model,
-        ]);
     }
 }

@@ -1,16 +1,27 @@
 {
-  "db": {
-    "class": "yii\\db\\Connection",
-    "schemaCache": "cache",
-    "charset": "utf8",
-    "login": "postgres",
-    "password": "postgres",
-    "host": "localhost",
-    "dbname": "inopolis",
-    "test-dbname": "inopolis_test"
-  },
-  "capcha": {
-    "reCapchaSecret": "secret-key",
-    "reCapchaSiteKey": "site-key"
-  }
+    "db": {
+        "class": "yii\\db\\Connection",
+        "schemaCache": "cache",
+        "charset": "utf8",
+        "login": "postgres",
+        "password": "postgres",
+        "host": "localhost",
+        "dbname": "inopolis",
+        "test-dbname": "inopolis_test"
+    },
+    "capcha": {
+        "reCapchaSecret": "secret-key",
+        "reCapchaSiteKey": "site-key"
+    },
+    "mailer": {
+        "class": "Swift_SmtpTransport",
+        "host": "smtp.mailtrap.io",
+        "username": "09b7f5ff7f09b3",
+        "password": "2db2c9a2236615",
+        "port": "465"
+    },
+    "general": {
+        "site-name": "Тестовый",
+        "domain": "http://inopolis.local"
+    }
 }
