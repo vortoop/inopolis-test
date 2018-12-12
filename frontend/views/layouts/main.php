@@ -41,12 +41,10 @@ AppAsset::register($this);
     if (Yii::$app->user->isGuest) {
         $menuItems[] = ['label' => 'Авторизация', 'url' => ['/site/auth']];
     } else {
+        $menuItems[] = ['label' => Yii::$app->user->identity->email, 'url' => ['/personal']];
         $menuItems[] = '<li>'
             . Html::beginForm(['/site/logout'], 'post')
-            . Html::submitButton(
-                'Logout (' . Yii::$app->user->identity->email . ')',
-                ['class' => 'btn btn-link logout']
-            )
+            . Html::submitButton('Выйти', ['class' => 'btn btn-link logout'])
             . Html::endForm()
             . '</li>';
     }
@@ -67,11 +65,7 @@ AppAsset::register($this);
 </div>
 
 <footer class="footer">
-    <div class="container">
-        <p class="pull-left">&copy; <?= Html::encode(Yii::$app->name) ?> <?= date('Y') ?></p>
-
-        <p class="pull-right"><?= Yii::powered() ?></p>
-    </div>
+    <div class="container"></div>
 </footer>
 
 <?php $this->endBody() ?>
